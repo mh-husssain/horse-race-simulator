@@ -4,14 +4,13 @@
  * the Horse and Race java classes.
  * 
  * @author Muhammad Hussain
- * @version 1.2 (22-04-2024)
+ * @version 1.3 (22-04-2024)
  * @see Horse
  * @see Race
- * 
  */
 public class Test {
     public static void main(String[] args) {
-        testRace();
+        testRaceGUI();
     }
 
 
@@ -36,9 +35,9 @@ public class Test {
 
     /**
      * Test the Race class
-     * @return void
+     * @return Race testing object
      */
-    public static void testRace()
+    public static Race testRace()
     {
         Race race = new Race(10);
         Horse horse1 = new Horse('A',"Horse1", 0.8);
@@ -53,6 +52,17 @@ public class Test {
         race.addHorse(horse1);
         race.addHorse(new Horse('D',"Horse4", 0.9));
 
-        /*while (true)*/ race.startRace();
+        return race;
+        ///*while (true)*/ race.startRace();
+    }
+
+    /**
+     * Test the RaceGUI class
+     * @return void
+     */
+    public static void testRaceGUI()
+    {
+        RaceGUI raceGUI = new RaceGUI(testRace());
+        raceGUI.setVisible(true);
     }
 }
