@@ -4,7 +4,7 @@
  * will be racing in the Race class.
  * 
  * @author Muhammad Hussain
- * @version 1.1 (20-04-2024)
+ * @version 1.2 (22-04-2024)
  */
 public class Horse
 {
@@ -42,6 +42,15 @@ public class Horse
     public void fall() {
         this.fallen = true;
         this.setConfidence(Math.round((this.getConfidence() - 0.1) * 10.0) / 10.0);
+    }
+
+    /**
+     * Set horse to standing
+     * @return void
+     */
+    public void stand()
+    {
+        fallen = false;
     }
     
     /**

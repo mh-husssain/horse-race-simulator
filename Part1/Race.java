@@ -6,7 +6,7 @@ import java.lang.Math;
  * and then initiate a race between them!
  * 
  * @author McFarewell - last edited by Muhammad Hussain
- * @version 2.0 (20-04-2024)
+ * @version 2.1 (22-04-2024)
  * @see Horse
  * 
  */
@@ -16,6 +16,7 @@ public class Race
     private Horse lane1Horse;
     private Horse lane2Horse;
     private Horse lane3Horse;
+    private int laneCount;
 
     /**
      * Constructor for objects of class Race
@@ -30,31 +31,43 @@ public class Race
         lane1Horse = null;
         lane2Horse = null;
         lane3Horse = null;
+        laneCount = 1;
     }
     
     /**
-     * Adds a horse to the race in a given lane
+     * Adds a horse to the race in the next free lane
      * 
      * @param theHorse the horse to be added to the race
-     * @param laneNumber the lane that the horse will be added to
      */
-    public void addHorse(Horse theHorse, int laneNumber)
+    public void addHorse(Horse theHorse)
     {
-        if (laneNumber == 1)
+        if (lane1Horse == theHorse || lane2Horse == theHorse || lane3Horse == theHorse)
         {
-            lane1Horse = theHorse;
+            System.out.println("This horse has already been added to the race!");
         }
-        else if (laneNumber == 2)
+        else if (laneCount > 3)
         {
-            lane2Horse = theHorse;
+            System.out.println("There are only a maximum of 3 lanes! Cannot add more horses.");
         }
-        else if (laneNumber == 3)
+        else // Add the horse to the lane
         {
-            lane3Horse = theHorse;
-        }
-        else
-        {
-            System.out.println("Cannot add horse to lane " + laneNumber + " because there is no such lane");
+            if (laneCount == 1)
+            {
+                lane1Horse = theHorse;
+            }
+            else if (laneCount == 2)
+            {
+                lane2Horse = theHorse;
+            }
+            else if (laneCount == 3)
+            {
+                lane3Horse = theHorse;
+            }
+            else
+            {
+                System.out.println("Cannot add horse to lane " + laneCount + " because there is no such lane");
+            }
+            laneCount++;
         }
     }
     
@@ -66,37 +79,38 @@ public class Race
      */
     public void startRace()
     {
+        // Racing horses array
+        Horse[] horses = {lane1Horse, lane2Horse, lane3Horse};
         //declare a local variable to tell us when the race is finished
         boolean finished = false;
         
         //reset all the lanes (all horses not fallen and back to 0). 
-        lane1Horse.goBackToStart();
-        lane2Horse.goBackToStart();
-        lane3Horse.goBackToStart();
+        for (Horse horse : horses)
+        {
+            horse.goBackToStart();
+            horse.stand();
+        }
+
         System.out.println("\n");
                       
         while (!finished)
         {
             //move each horse
-            moveHorse(lane1Horse);
-            moveHorse(lane2Horse);
-            moveHorse(lane3Horse);
+            for (Horse horse : horses)
+            {
+                moveHorse(horse);
+            }
                         
             //print the race positions
             printRace();
             
             //if any of the three horses has won the race is finished
-            if ( raceWonBy(lane1Horse) )
+            for (Horse horse : horses)
             {
-                finished = true;
-            }
-            if ( raceWonBy(lane2Horse) )
-            {
-                finished = true;
-            }
-            if ( raceWonBy(lane3Horse) )
-            {
-                finished = true;
+                if (raceWonBy(horse))
+                {
+                    finished = true;
+                }
             }
 
             if (lane1Horse.hasFallen() && lane2Horse.hasFallen() && lane3Horse.hasFallen())
@@ -114,7 +128,6 @@ public class Race
 
         printRace();
         // Display the name of the winning horse(s)! MODIFICATION
-        Horse[] horses = {lane1Horse, lane2Horse, lane3Horse};
         for (Horse horse : horses)
         {
             if (raceWonBy(horse))
