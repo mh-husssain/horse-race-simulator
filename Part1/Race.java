@@ -2,11 +2,11 @@ import java.util.concurrent.TimeUnit;
 import java.lang.Math;
 
 /**
- * A three-horse race, each horse running in its own lane
- * for a given distance
+ * A Race object which can add up to 3 horses
+ * and then initiate a race between them!
  * 
- * @author McFarewell
- * @version 1.0
+ * @author McFarewell - last edited by Muhammad Hussain
+ * @version 2.0 (20-04-2024)
  */
 public class Race
 {
@@ -71,6 +71,7 @@ public class Race
         lane1Horse.goBackToStart();
         lane2Horse.goBackToStart();
         lane3Horse.goBackToStart();
+        System.out.println("\n");
                       
         while (!finished)
         {
@@ -83,15 +84,41 @@ public class Race
             printRace();
             
             //if any of the three horses has won the race is finished
-            if ( raceWonBy(lane1Horse) || raceWonBy(lane2Horse) || raceWonBy(lane3Horse) )
+            if ( raceWonBy(lane1Horse) )
             {
                 finished = true;
             }
+            if ( raceWonBy(lane2Horse) )
+            {
+                finished = true;
+            }
+            if ( raceWonBy(lane3Horse) )
+            {
+                finished = true;
+            }
+
+            if (lane1Horse.hasFallen() && lane2Horse.hasFallen() && lane3Horse.hasFallen())
+            {
+                printRace();
+                System.out.println("All horses have fallen, no winner");
+                return;
+            }
            
-            //wait for 100 milliseconds
+            //wait for 300 milliseconds
             try{ 
                 TimeUnit.MILLISECONDS.sleep(100);
             }catch(Exception e){}
+        }
+
+        printRace();
+        // Display the name of the winning horse(s)! MODIFICATION
+        Horse[] horses = {lane1Horse, lane2Horse, lane3Horse};
+        for (Horse horse : horses)
+        {
+            if (raceWonBy(horse))
+            {
+                System.out.println("The winner is: "+ horse.getName());
+            }
         }
     }
     
@@ -135,6 +162,7 @@ public class Race
     {
         if (theHorse.getDistanceTravelled() == raceLength)
         {
+            theHorse.setConfidence(Math.round((theHorse.getConfidence() + 0.1) * 10.0) / 10.0);
             return true;
         }
         else
@@ -148,7 +176,7 @@ public class Race
      */
     private void printRace()
     {
-        System.out.print('\u000C');  //clear the terminal window
+        System.out.print("\033[H\033[2J");  //clear the terminal window
         
         multiplePrint('=',raceLength+3); //top edge of track
         System.out.println();
@@ -189,7 +217,7 @@ public class Race
         //else print the horse's symbol
         if(theHorse.hasFallen())
         {
-            System.out.print('\u2322');
+            System.out.print('X');
         }
         else
         {
@@ -201,6 +229,8 @@ public class Race
         
         //print the | for the end of the track
         System.out.print('|');
+
+        System.out.print("    "+ theHorse.getName() +", current confidence: "+ theHorse.getConfidence());
     }
         
     
@@ -209,6 +239,7 @@ public class Race
      * e.g. printmany('x',5) will print: xxxxx
      * 
      * @param aChar the character to Print
+     * @param times the number of times to print the character
      */
     private void multiplePrint(char aChar, int times)
     {
