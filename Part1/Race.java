@@ -7,6 +7,8 @@ import java.lang.Math;
  * 
  * @author McFarewell - last edited by Muhammad Hussain
  * @version 2.0 (20-04-2024)
+ * @see Horse
+ * 
  */
 public class Race
 {
