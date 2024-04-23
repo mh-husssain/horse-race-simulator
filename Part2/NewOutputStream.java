@@ -8,7 +8,7 @@ import javax.swing.JTextArea;
  * RaceGUI JTextArea textDisplay.
  * 
  * @author Muhammad Hussain
- * @version 1.0 (22-04-2024)
+ * @version 1.0 (23-04-2024)
  * @see RaceGUI
  */
 public class NewOutputStream extends OutputStream {
@@ -40,7 +40,7 @@ public class NewOutputStream extends OutputStream {
      * Write a string to the textArea.
      * @param message String to write
      */
-    public void write(String message)
+    public void print(String message)
     {
         textArea.append(message);
     }

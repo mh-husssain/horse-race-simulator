@@ -4,7 +4,7 @@
  * will be racing in the Race class.
  * 
  * @author Muhammad Hussain
- * @version 1.2 (22-04-2024)
+ * @version 1.3 (23-04-2024)
  */
 public class Horse
 {
@@ -14,7 +14,28 @@ public class Horse
     private int distance;
     private boolean fallen;
     private double confidence;    
+    private int lane;
     
+    // Part 2 Modifications:
+    /**
+     * Set the lane number of the horse
+     * @param laneNumber
+     */
+    public void setLane(int laneNumber)
+    {
+        this.lane = laneNumber;
+    }
+    /**
+     * Get the lane number of the horse
+     * @return int lane
+     */
+    public int getLane()
+    {
+        return this.lane;
+    }
+    //
+
+
       
     //Constructor of class Horse
     /**

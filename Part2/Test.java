@@ -4,7 +4,7 @@
  * the Horse and Race java classes.
  * 
  * @author Muhammad Hussain
- * @version 1.3 (22-04-2024)
+ * @version 1.4 (23-04-2024)
  * @see Horse
  * @see Race
  */
@@ -39,7 +39,7 @@ public class Test {
      */
     public static Race testRace()
     {
-        Race race = new Race(10);
+        Race race = new Race();
         Horse horse1 = new Horse('A',"Horse1", 0.8);
         Horse horse2 = new Horse('B',"Horse2", 1);
         Horse horse3 = new Horse('C',"Horse3", 0.6);
@@ -62,7 +62,7 @@ public class Test {
      */
     public static void testRaceGUI()
     {
-        RaceGUI raceGUI = new RaceGUI(testRace());
+        RaceGUI raceGUI = new RaceGUI();
         raceGUI.setVisible(true);
     }
 }
