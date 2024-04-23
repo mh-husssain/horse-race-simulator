@@ -4,7 +4,7 @@
  * will be racing in the Race class.
  * 
  * @author Muhammad Hussain
- * @version 1.3 (23-04-2024)
+ * @version 1.4 (23-04-2024)
  */
 public class Horse
 {
@@ -15,6 +15,7 @@ public class Horse
     private boolean fallen;
     private double confidence;    
     private int lane;
+    private Statistics stats;
     
     // Part 2 Modifications:
     /**
@@ -33,6 +34,26 @@ public class Horse
     {
         return this.lane;
     }
+
+    /**
+     * Get the statistics of the horse
+     * @return Statistics stats
+     */
+    public Statistics getStats()
+    {
+        return this.stats;
+    }
+
+    /**
+     * Horse Object to return
+     * its name as string
+     * @return String name
+     */
+    @Override
+    public String toString()
+    {
+        return name;
+    }
     //
 
 
@@ -50,6 +71,7 @@ public class Horse
         this.symbol = horseSymbol;
         this.name = horseName;
         this.confidence = horseConfidence;
+        this.stats = new Statistics();
     }
     
     
@@ -60,7 +82,8 @@ public class Horse
      * Set horse to fallen and decrease confidence by 0.1
      * @return void
      */
-    public void fall() {
+    public void fall()
+    {
         this.fallen = true;
         this.setConfidence(Math.round((this.getConfidence() - 0.1) * 10.0) / 10.0);
     }
@@ -154,7 +177,7 @@ public class Horse
         }
         else
         {
-            this.confidence = newConfidence;
+            this.confidence = Math.round(newConfidence * 100.0) / 100.0;
         }
     }
     

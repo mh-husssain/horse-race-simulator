@@ -1,14 +1,13 @@
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.lang.Math;
-import javax.swing.JTextArea;
 
 /**
  * A Race object which can add up to 3 horses
  * and then initiate a race between them!
  * 
  * @author McFarewell - last edited by Muhammad Hussain
- * @version 2.2 (23-04-2024)
+ * @version 2.3 (23-04-2024)
  * @see Horse
  * 
  */
@@ -38,6 +37,11 @@ public class Race
     public void setOutputStream(NewOutputStream stream)
     {
         Output = stream;
+    }
+
+    public ArrayList<Horse> getAllHorses()
+    {
+        return horses;
     }
 
     ///
@@ -136,6 +140,11 @@ public class Race
             if (raceWonBy(horse))
             {
                 Output.print("The winner is: "+ horse.getName());
+                horse.getStats().addPerformance(true, horse.getConfidence(), horse.hasFallen());;
+            }
+            else
+            {
+                horse.getStats().addPerformance(false, horse.getConfidence(), horse.hasFallen());
             }
         }
     }
