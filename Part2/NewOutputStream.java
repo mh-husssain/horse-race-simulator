@@ -1,5 +1,4 @@
 
-import java.io.OutputStream;
 import javax.swing.JTextArea;
 
 /**
@@ -11,7 +10,7 @@ import javax.swing.JTextArea;
  * @version 1.0 (23-04-2024)
  * @see RaceGUI
  */
-public class NewOutputStream extends OutputStream {
+public class NewOutputStream{
     private JTextArea textArea;
 
     /**
@@ -24,24 +23,20 @@ public class NewOutputStream extends OutputStream {
     }
 
     /**
-     * Write a byte to the textArea.
-     * Output Stream must have this method.
-     * 
-     * @param b byte to write
-     */
-    @Override
-    public void write(int b)
-    {
-        textArea.append(String.valueOf((char) b));
-        textArea.setCaretPosition(textArea.getDocument().getLength());
-    }
-
-    /**
      * Write a string to the textArea.
      * @param message String to write
      */
     public void print(String message)
     {
         textArea.append(message);
+    }
+
+    /**
+     * Clear the text area.
+     * @return void
+     */
+    public void clearDisplay()
+    {
+        textArea.setText("");
     }
 }

@@ -7,7 +7,7 @@ import java.lang.Math;
  * and then initiate a race between them!
  * 
  * @author McFarewell - last edited by Muhammad Hussain
- * @version 2.3 (23-04-2024)
+ * @version 2.4 (26-04-2024)
  * @see Horse
  * 
  */
@@ -17,6 +17,10 @@ public class Race
     private int raceLength;
     private ArrayList<Horse> horses;
     private int laneCount;
+    private Horse betHorse;
+    private int budget;
+    private double bet;
+    boolean wonBet;
 
 
     // Part 2 Modifications:
@@ -39,9 +43,76 @@ public class Race
         Output = stream;
     }
 
+    /**
+     * Set the betHorse to the horse
+     * @return ArrayList<Horse>
+     */
     public ArrayList<Horse> getAllHorses()
     {
         return horses;
+    }
+    
+    /**
+     * Set the horse we place a bet on
+     * @param horse
+     */
+    public void setBetHorse(Horse horse)
+    {
+        betHorse = horse;
+    }
+
+    /**
+     * Get the horse we place a bet on
+     * @return Horse
+     */
+    public Horse getBetHorse()
+    {
+        return betHorse;
+    }
+
+    /**
+     * Set the budget of the player
+     * @param budget
+     */
+    public void setBudget(int budget)
+    {
+        this.budget = budget;
+    }
+
+    /**
+     * Get the budget of the player
+     * @return int budget
+     */
+    public int getBudget()
+    {
+        return budget;
+    }
+
+    /**
+     * Set the bet amount
+     * @param double amount of bet
+     */
+    public void setBet(double bet)
+    {
+        this.bet = bet;
+    }
+
+    /**
+     * Get the bet amount
+     * @return double bet
+     */
+    public double getBet()
+    {
+        return bet;
+    }
+
+    /**
+     * Get the wonBet boolean
+     * @return boolean wonBet
+     */
+    public boolean getWonBet()
+    {
+        return wonBet;
     }
 
     ///
@@ -56,6 +127,8 @@ public class Race
         // initialise instance variables
         horses = new ArrayList<Horse>();
         laneCount = 1;
+        budget = 75000;
+        wonBet = false;
     }
     
     /**
@@ -68,6 +141,17 @@ public class Race
         horses.add(theHorse);
         theHorse.setLane(laneCount);
         this.laneCount++;
+    }
+
+    /**
+     * Deletes a horse from the race
+     * 
+     * @param theHorse the horse to be added to the race
+     */
+    public void delHorse(Horse theHorse)
+    {
+        horses.remove(theHorse);
+        this.laneCount--;
     }
     
     /**
@@ -122,7 +206,7 @@ public class Race
             }
             if (allHorsesFallen)
             {
-                Output.print("All horses have fallen, no winner");
+                Output.print("All horses have fallen, no winner.\n");
                 return;
             }
         // End check
@@ -139,7 +223,7 @@ public class Race
         {
             if (raceWonBy(horse))
             {
-                Output.print("The winner is: "+ horse.getName());
+                Output.print("The winner is: "+ horse.getName()+"\n");
                 horse.getStats().addPerformance(true, horse.getConfidence(), horse.hasFallen());;
             }
             else
@@ -187,9 +271,10 @@ public class Race
      */
     private boolean raceWonBy(Horse theHorse)
     {
-        if (theHorse.getDistanceTravelled() == raceLength)
+        if (theHorse.getDistanceTravelled() >= raceLength)
         {
             theHorse.setConfidence(Math.round((theHorse.getConfidence() + 0.1) * 10.0) / 10.0);
+            wonBet = (theHorse == betHorse);
             return true;
         }
         else
@@ -203,7 +288,7 @@ public class Race
      */
     private void printRace()
     {
-        RaceGUI.clearDisplay();
+        Output.clearDisplay();
 
         multiplePrint('=',raceLength*2); //top edge of track
         Output.print("\n");
