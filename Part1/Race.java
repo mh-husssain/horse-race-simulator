@@ -175,7 +175,7 @@ public class Race
      */
     private boolean raceWonBy(Horse theHorse)
     {
-        if (theHorse.getDistanceTravelled() == raceLength)
+        if (theHorse.getDistanceTravelled() >= raceLength)
         {
             theHorse.setConfidence(Math.round((theHorse.getConfidence() + 0.1) * 10.0) / 10.0);
             return true;
