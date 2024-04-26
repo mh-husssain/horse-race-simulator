@@ -10,7 +10,7 @@
  */
 public class Test {
     public static void main(String[] args) {
-        testRaceGUI();
+        startRaceGUI();
     }
 
 
@@ -60,7 +60,7 @@ public class Test {
      * Test the RaceGUI class
      * @return void
      */
-    public static void testRaceGUI()
+    public static void startRaceGUI()
     {
         RaceGUI raceGUI = new RaceGUI();
         raceGUI.setVisible(true);

@@ -11,7 +11,7 @@
  */
 public class Test {
     public static void main(String[] args) {
-        testRace();
+        startRace();
     }
 
 
@@ -38,7 +38,7 @@ public class Test {
      * Test the Race class
      * @return void
      */
-    public static void testRace()
+    public static void startRace()
     {
         Race race = new Race(10);
         Horse horse1 = new Horse('A',"Horse1", 0.8);
