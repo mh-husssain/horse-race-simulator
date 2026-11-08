@@ -1,12 +1,14 @@
 package horserace;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * A class to store the statistics of a horse
- * 
+ * Running statistics for one horse across every race it has entered.
+ *
  * @author Muhammad Hussain
- * @version 1.0 (23-04-2024)
+ * @version 2.0
  * @see Horse
  * @see RacePerformance
  */
@@ -14,214 +16,110 @@ public class Statistics
 {
     private int wins;
     private int losses;
-    private ArrayList<RacePerformance> performances;
-    private double winRatio;
-    private double avgConfidence;
-    private String fallenRatio;
-
-
+    private final List<RacePerformance> performances = new ArrayList<>();
 
     /**
-     * Constructor for Stats module of class Horse
-     * @return Statistics object
-     */
-    public Statistics()
-    {
-        this.wins = 0;
-        this.losses = 0;
-        this.winRatio = 0;
-        this.performances = new ArrayList<RacePerformance>();
-        this.avgConfidence = 0;
-        this.fallenRatio = "0%";
-    }
-
-    /**
-     * Get the statistics of the horse
-     * @return String of all stats
-     */
-    public String asString(Horse horse)
-    {
-        String statistics = "Horse Name: " + horse.getName() + "\n";
-        statistics += "Wins: " + getWins() + "\n";
-        statistics += "Losses: " + getLosses() + "\n";
-        statistics += "Win Rate: " + getWinRatio() + "\n";
-        statistics += "Average Confidence: " + avgConfidence + "\n";
-        statistics += "Fallen Ratio: " + fallenRatio + "\n\n";
-
-        statistics += "Performance History: \n";
-        int matchCount = 1;
-        for (RacePerformance race : performances)
-        {
-            statistics += "Match " + matchCount + ":\n";
-            statistics += race;
-            matchCount ++;
-            statistics += "\n";
-        }
-
-        return statistics;
-    }
-    //
-
-    /**
-     * Increment the number of wins of the horse
-     * @return void
-     */
-    public void Win(boolean winner)
-    {
-        if (winner)
-        {
-            this.wins ++;
-        }
-        else
-        {
-            this.losses ++;
-        }
-    }
-    /**
-     * Get the number of wins of the horse
-     * @return int wins
-     */
-    public int getWins()
-    {
-        return this.wins;
-    }
-    /**
-     * Get the number of losses of the horse
-     * @return int losses
-     */
-    public int getLosses()
-    {
-        return this.losses;
-    }
-
-    /**
-     * Set  the new win ratio of the
-     * horse after calculating it
-     * @return void
-     */
-    public void setWinRatio()
-    {
-        if (this.wins == 0)
-        {
-            this.winRatio = (double) (0 - this.losses);
-        }
-        else if (this.losses == 0)
-        {
-            this.winRatio = (double) this.wins;
-        }
-        
-        else
-        {
-            this.winRatio = (double) this.wins / (this.wins + this.losses);
-        }
-        // Round the win ratio to 2 decimal places
-        this.winRatio = Math.round(this.winRatio * 100.0) / 100.0;
-    }
-
-    /**
-     * Get the win ratio of the horse
-     * @return double winRatio
-     */
-    public double getWinRatio()
-    {
-        return this.winRatio;
-    }
-
-    public void setAverages()
-    {
-        double totalConfidence = 0;
-        int fallenCount = 0;
-        for (RacePerformance race : performances)
-        {
-            totalConfidence += race.getConfidence();
-            if (race.getFallen()) fallenCount ++;
-        }
-
-        // Calculate the average confidence of the horse
-        this.avgConfidence = (totalConfidence) / this.performances.size();
-        this.avgConfidence = Math.round(this.avgConfidence * 100.0) / 100.0;
-        this.fallenRatio = (fallenCount / this.performances.size()) * 100 + "%";
-    }
-
-
-    /**
-     * Add a performance to the horse's stats
-     * @param boolean did horse win/tie
-     * @param double horses final confidence
-     * @param boolean did horse fall
+     * Record the outcome of a race.
+     * @param winner whether the horse won or tied
+     * @param confidence the horse's final confidence
+     * @param fallen whether the horse fell
      */
     public void addPerformance(boolean winner, double confidence, boolean fallen)
     {
-        RacePerformance newPerformance = new RacePerformance(winner, confidence, fallen);
-        this.performances.add(newPerformance);
-
-        // Set new performance metrics
-        this.Win(winner);
-        this.setWinRatio();
-        this.setAverages();
+        performances.add(new RacePerformance(winner, confidence, fallen));
+        if (winner)
+        {
+            wins++;
+        }
+        else
+        {
+            losses++;
+        }
     }
-}
 
-/**
- * A class to store the performance of
- * each individual race.
- * 
- * @author Muhammad Hussain
- * @version 1.0 (23-04-2024)
- * @see Statistics
- */
-class RacePerformance
-{
-    private boolean winner;
-    private double confidence;
-    private boolean fallen;
-
-    @Override
-    public String toString()
+    public int getWins()
     {
-        String performance = "Winner: " + winner + "\n";
-        performance += "Confidence: " + confidence + "\n";
-        performance += "Fallen: " + fallen + "\n";
-        return performance;
+        return wins;
+    }
+
+    public int getLosses()
+    {
+        return losses;
     }
 
     /**
-     * Constructor for RacePerformance
-     * @param winner
-     * @param confidence
-     * @param fallen
+     * @return wins as a fraction of races entered (0 to 1, two decimal places); 0 before any race
      */
-    public RacePerformance(boolean winner, double confidence, boolean fallen)
+    public double getWinRatio()
     {
-        this.winner = winner;
-        this.confidence = Math.round(confidence * 100.0) / 100.0;
-        this.fallen = fallen;
+        int races = wins + losses;
+        return races == 0 ? 0 : round2((double) wins / races);
     }
 
     /**
-     * Get the winner status of the race performance
-     * @return boolean winner
+     * @return mean end-of-race confidence (two decimal places); 0 before any race
      */
-    public boolean getWinner()
+    public double getAverageConfidence()
     {
-        return this.winner;
+        if (performances.isEmpty())
+        {
+            return 0;
+        }
+        double total = 0;
+        for (RacePerformance race : performances)
+        {
+            total += race.confidence();
+        }
+        return round2(total / performances.size());
     }
 
     /**
-     * Get the confidence of the race performance
-     * @return double confidence
+     * @return percentage of races in which the horse fell (0 to 100, whole number); 0 before any race
      */
-    public double getConfidence()
+    public long getFallenPercentage()
     {
-        return this.confidence;
+        if (performances.isEmpty())
+        {
+            return 0;
+        }
+        long fallen = performances.stream().filter(RacePerformance::fallen).count();
+        return Math.round(100.0 * fallen / performances.size());
     }
 
     /**
-     * Get the fallen status of the race performance
-     * @return boolean fallen
+     * @return the race history, oldest first (read-only)
      */
-    public boolean getFallen()
+    public List<RacePerformance> getPerformances()
     {
-        return this.fallen;
+        return Collections.unmodifiableList(performances);
+    }
+
+    /**
+     * Human-readable summary shown in the GUI.
+     * @param horse the horse these statistics belong to
+     * @return multi-line summary including the full race history
+     */
+    public String asString(Horse horse)
+    {
+        StringBuilder statistics = new StringBuilder()
+            .append("Horse Name: ").append(horse.getName()).append('\n')
+            .append("Wins: ").append(getWins()).append('\n')
+            .append("Losses: ").append(getLosses()).append('\n')
+            .append("Win Rate: ").append(getWinRatio()).append('\n')
+            .append("Average Confidence: ").append(getAverageConfidence()).append('\n')
+            .append("Fallen Ratio: ").append(getFallenPercentage()).append("%\n\n")
+            .append("Performance History: \n");
+
+        int matchCount = 1;
+        for (RacePerformance race : performances)
+        {
+            statistics.append("Match ").append(matchCount++).append(":\n").append(race).append('\n');
+        }
+        return statistics.toString();
+    }
+
+    private static double round2(double value)
+    {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

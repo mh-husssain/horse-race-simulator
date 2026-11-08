@@ -8,7 +8,7 @@ package horserace;
  * @author Muhammad Hussain
  * @version 1.4 (23-04-2024)
  */
-public class Horse
+public final class Horse
 {
     //Fields of class Horse
     private String name;
@@ -62,7 +62,8 @@ public class Horse
       
     //Constructor of class Horse
     /**
-     * Constructor for objects of class Horse
+     * Constructor for objects of class Horse.
+     * Confidence is clamped to the range 0 to 1.
      * @param horseSymbol char symbol of the horse
      * @param horseName String name of the horse
      * @param horseConfidence double confidence of the horse
@@ -72,7 +73,7 @@ public class Horse
     {
         this.symbol = horseSymbol;
         this.name = horseName;
-        this.confidence = horseConfidence;
+        this.setConfidence(horseConfidence);
         this.stats = new Statistics();
     }
     
@@ -81,13 +82,12 @@ public class Horse
     //Other methods of class Horse
 
     /**
-     * Set horse to fallen and decrease confidence by 0.1
-     * @return void
+     * Set horse to fallen and decrease confidence by 0.1 (never below 0)
      */
     public void fall()
     {
         this.fallen = true;
-        this.setConfidence(Math.round((this.getConfidence() - 0.1) * 10.0) / 10.0);
+        this.setConfidence(this.getConfidence() - 0.1);
     }
 
     /**

@@ -3,32 +3,31 @@ package horserace;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 
 /**
  * A GUI class to provide a user
  * interface for the Race class
  * 
  * @author Muhammad Hussain
- * @version 1.3 (26-04-2024)
+ * @version 2.0
  * @see Race
- * @see NewOutputStream
+ * @see TextAreaOutput
  */
 public class RaceGUI extends JFrame
 {
-    private static JTextArea textDisplay;
-    private NewOutputStream outputStream;
-    private Race race;
+    private static final String NAME_PLACEHOLDER = "Enter Horse Name....";
+
+    private JTextArea textDisplay;
+    private TextAreaOutput outputStream;
+    private final Race race;
     private JSpinner raceTracks;
     private JSpinner raceDistance;
-    private JTextField horseName;
-    private JComboBox<Character> horseSymbol;
     private JSpinner horseConfidence;
-    private ArrayList<Horse> horses;
     private JComboBox<Horse> horseSelector;
+    private JTextArea horseStats;
     private JSpinner betSpinner;
     private JTextArea bettingStats;
-    private double bet;
+    private JButton[] controls;
 
     /**
      * Constructor for RaceGUI
@@ -38,9 +37,7 @@ public class RaceGUI extends JFrame
      */
     public RaceGUI()
     {
-        // Initialising fields
-        horses = new ArrayList<Horse>();
-        this.race = new Race(); // Initialised in JTextArea block
+        this.race = new Race();
 
         setTitle("Horse Race");
         setSize(1100, 760);
@@ -105,7 +102,7 @@ public class RaceGUI extends JFrame
         JScrollPane scrollPane = new JScrollPane(textDisplay);
         displayPanel.add(scrollPane, BorderLayout.WEST);
         textDisplay.setText("Welcome to the Horse Race game!\n");
-        outputStream = new NewOutputStream(textDisplay);
+        outputStream = new TextAreaOutput(textDisplay);
         this.race.setOutputStream(outputStream);
 
     // Start Race button
@@ -141,7 +138,7 @@ public class RaceGUI extends JFrame
 //
 
 // Horse Name TextField
-    JTextField horseName = new JTextField("Enter Horse Name....");
+    JTextField horseName = new JTextField(NAME_PLACEHOLDER);
     horsePanel.add(horseName);
 //
 
@@ -169,7 +166,12 @@ public class RaceGUI extends JFrame
         public void actionPerformed(ActionEvent e)
         {
             // Get the values from the input fields
-            String name = horseName.getText();
+            String name = horseName.getText().trim();
+            if (name.isEmpty() || name.equals(NAME_PLACEHOLDER))
+            {
+                showError("Enter a name for the horse first.");
+                return;
+            }
             char symbol = (char) horseSymbol.getSelectedItem();
             double confidence = (double) horseConfidence.getValue();
             confidence = Math.round(confidence * 100.0) / 100.0;
@@ -178,7 +180,6 @@ public class RaceGUI extends JFrame
             race.addHorse(newHorse);
             raceTracks.setValue((int) raceTracks.getValue() + 1);
             outputStream.print("New horse added: " + newHorse.getName() + ", Symbol: " + newHorse.getSymbol() + ", Confidence: " + newHorse.getConfidence() + ", Lane: " + newHorse.getLane()+"\n");
-            horses = race.getAllHorses();
             horseSelector.addItem(newHorse);
         }
     });
@@ -187,7 +188,7 @@ public class RaceGUI extends JFrame
 
 // View Horse Statistics
     horseSelector = new JComboBox<>();
-    JTextArea horseStats = new JTextArea(11, 20);
+    horseStats = new JTextArea(11, 20);
     horseStats.setEditable(false);
     horseStats.setFont(new Font("monospace", Font.PLAIN, 14));
     JScrollPane horseStatsScrollPane = new JScrollPane(horseStats);
@@ -195,10 +196,7 @@ public class RaceGUI extends JFrame
     {
         public void actionPerformed(ActionEvent e)
         {
-            Horse selectedHorse = (Horse) horseSelector.getSelectedItem();
-            horseStats.setText("");
-            horseStats.append(selectedHorse.getStats().asString(selectedHorse));
-            clearBettingDisplay(selectedHorse);
+            refreshSelectedHorse();
         }
     });
     // Delete Horse Button
@@ -208,6 +206,11 @@ public class RaceGUI extends JFrame
         public void actionPerformed(ActionEvent e)
         {
             Horse selectedHorse = (Horse) horseSelector.getSelectedItem();
+            if (selectedHorse == null)
+            {
+                showError("Select a horse to delete.");
+                return;
+            }
             race.delHorse(selectedHorse);
             textDisplay.append("\n"+selectedHorse.getName() + " has been removed from the race!\n");
             horseSelector.removeItem(selectedHorse);
@@ -223,7 +226,7 @@ public class RaceGUI extends JFrame
 //
 // Enter Betting System
     JLabel betLabel = new JLabel("Enter your bet:");
-    SpinnerNumberModel bettingSpinner = new SpinnerNumberModel(0.00, 0.00, 10000.00, 50.00);
+    SpinnerNumberModel bettingSpinner = new SpinnerNumberModel(50, 0, 10000, 50);
     betSpinner = new JSpinner(bettingSpinner);
     betSpinner.setToolTipText("Enter your bet amount");
     betSpinner.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -241,7 +244,7 @@ public class RaceGUI extends JFrame
     bettingStats = new JTextArea(11, 20);
     bettingStats.setEditable(false);
     bettingStats.setFont(new Font("monospace", Font.PLAIN, 14));
-    bettingStats.append("Current Budget: £0.00");
+    bettingStats.append("Current Budget: £" + race.getBudget());
     JScrollPane bettingScrollPane = new JScrollPane(bettingStats);
     bettingScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
@@ -255,82 +258,99 @@ public class RaceGUI extends JFrame
 
     // Initialise button layouts
     initialiseButtons(startButton, addHorseButton, deleteHorseButton, placeBetButton);
+    controls = new JButton[] {startButton, addHorseButton, deleteHorseButton, placeBetButton};
     }
 
     /**
-     * Clear the text display
-     * @return void
+     * Show the selected horse's statistics and the betting summary.
      */
-    public void clearDisplay()
+    private void refreshSelectedHorse()
     {
-        textDisplay.setText("");
+        Horse selectedHorse = (Horse) horseSelector.getSelectedItem();
+        horseStats.setText(selectedHorse == null ? "" : selectedHorse.getStats().asString(selectedHorse));
+        clearBettingDisplay(selectedHorse);
     }
 
     /**
-     * Clear the betting display
-     * @return void
+     * Reset the betting display to the budget, any open bet and the selected horse
+     * @param selectedHorse the horse to describe, or null
      */
     public void clearBettingDisplay(Horse selectedHorse)
     {
-        bettingStats.setText("Current Budget: "+ race.getBudget()+"\n\nHorse Name: "+ selectedHorse.getName());
-        bettingStats.setFont(new Font("monospace", Font.PLAIN, 14));
-        bettingStats.append("\nSymbol: " + selectedHorse.getSymbol() + "\n");
+        bettingStats.setText("Current Budget: £" + race.getBudget() + "\n");
+        if (race.getBetHorse() != null)
+        {
+            bettingStats.append("Bet placed: £" + race.getBetAmount() + " on " + race.getBetHorse().getName() + "\n");
+        }
+        if (selectedHorse != null)
+        {
+            bettingStats.append("\nHorse Name: " + selectedHorse.getName() + "\nSymbol: " + selectedHorse.getSymbol() + "\n");
+        }
     }
 
     /**
-     * Process when the Start
-     * Race button is clicked
+     * Process when the Start Race button is clicked. The race runs on a
+     * background thread so the window stays responsive; the controls are
+     * disabled until it finishes so the race state cannot change mid-race.
      */
     public void startButton()
     {
-        horses = race.getAllHorses();
-        int distance = (int) raceDistance.getValue();
-        race.setRaceLength(distance);
+        race.setRaceLength((int) raceDistance.getValue());
         textDisplay.setText("");
-        
-        new Thread(() -> {
-            race.startRace(); // Run race logic in a separate thread
-            
-            // Check the race outcome and update UI accordingly
+        setControlsEnabled(false);
+
+        Thread raceThread = new Thread(() -> {
+            race.startRace();
+
             SwingUtilities.invokeLater(() -> {
-                if (race.getBet() > 0)
+                boolean hadBet = race.getBetHorse() != null;
+                String betHorseName = hadBet ? race.getBetHorse().getName() : null;
+                int payout = race.settleBet();
+                refreshSelectedHorse();
+                if (hadBet)
                 {
-                    if (race.wonBet) {
-                        race.setBudget((int) (race.getBudget() + (race.getBet() * 2)));
-                        clearBettingDisplay(race.getBetHorse());
-                        bettingStats.append("\nCongratulations, you won!\nYou take home 2x the earnings!\n");
-                    }
-                    else
-                    {
-                        clearBettingDisplay(race.getBetHorse());
-                        bettingStats.append("\nSorry, you lost the bet!\n");
-                    }
+                    bettingStats.append(payout > 0
+                        ? "\nCongratulations, " + betHorseName + " won!\nYou take home £" + payout + ".\n"
+                        : "\nSorry, " + betHorseName + " did not win. You lost the bet.\n");
                 }
-                else
-                {
-                    clearBettingDisplay((Horse) horseSelector.getSelectedItem());
-                }
-                race.setBet(0);
+                setControlsEnabled(true);
             });
-        }).start();
+        }, "race");
+        raceThread.setDaemon(true);
+        raceThread.start();
     }
 
-
     /**
-     * Process when a bet is
-     * placed on a horse.
+     * Process when a bet is placed on the selected horse.
      */
     public void placeBetButton()
     {
-        bet = (double) betSpinner.getValue();
-        bet = Math.round(bet * 100.0) / 100.0;
-        race.setBet(bet);
-        race.setBudget(race.getBudget() - (int)bet);
         Horse selectedHorse = (Horse) horseSelector.getSelectedItem();
+        int amount = (int) betSpinner.getValue();
+        try
+        {
+            race.placeBet(selectedHorse, amount);
+        }
+        catch (IllegalArgumentException | IllegalStateException e)
+        {
+            showError(e.getMessage());
+            return;
+        }
         clearBettingDisplay(selectedHorse);
-        race.setBetHorse(selectedHorse);
-        String formattedBet = String.format("%.2f", bet);
-        bettingStats.append("\nYou have placed a bet of £" + formattedBet + " on "+race.getBetHorse().getName()+"!\n");
+        bettingStats.append("\nYou have placed a bet of £" + amount + " on " + selectedHorse.getName() + "!\n");
+    }
+
+    private void setControlsEnabled(boolean enabled)
+    {
+        for (JButton button : controls)
+        {
+            button.setEnabled(enabled);
+        }
+    }
+
+    private void showError(String message)
+    {
+        JOptionPane.showMessageDialog(this, message, "Horse Race", JOptionPane.WARNING_MESSAGE);
     }
 
     /**

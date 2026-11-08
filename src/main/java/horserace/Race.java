@@ -1,310 +1,358 @@
 package horserace;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-import java.lang.Math;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 /**
- * A Race object which can add up to 3 horses
- * and then initiate a race between them!
- * 
- * @author McFarewell - last edited by Muhammad Hussain
- * @version 2.4 (26-04-2024)
+ * A race between any number of horses, each in its own lane, plus the
+ * player's single bet on the outcome.
+ *
+ * Originally based on the module-provided starter class by McFarewell
+ * (three fixed lanes, terminal output); extended by Muhammad Hussain with
+ * any number of lanes, pluggable output, statistics recording and betting.
+ *
+ * @author McFarewell (starter code), Muhammad Hussain
+ * @version 3.0
  * @see Horse
- * 
  */
 public class Race
 {
-    private NewOutputStream Output;
+    /** Starting balance for the player, in pounds. */
+    public static final int STARTING_BUDGET = 75_000;
+
+    private final Random random;
+    private final long tickMillis;
+    private final List<Horse> horses = new ArrayList<>();
+    private RaceOutput output = RaceOutput.NONE;
     private int raceLength;
-    private ArrayList<Horse> horses;
-    private int laneCount;
+
+    private int budget = STARTING_BUDGET;
     private Horse betHorse;
-    private int budget;
-    private double bet;
-    boolean wonBet;
+    private int betAmount;
+    private boolean wonBet;
 
-
-    // Part 2 Modifications:
     /**
-     * Set the raceLength to parameter value
-     * @param length
+     * A race with real randomness and a 100 ms pause between frames.
+     */
+    public Race()
+    {
+        this(new Random(), 100);
+    }
+
+    /**
+     * @param random source of randomness for movement and falls (seed it for repeatable races)
+     * @param tickMillis pause between frames; 0 runs the race instantly
+     */
+    public Race(Random random, long tickMillis)
+    {
+        this.random = random;
+        this.tickMillis = tickMillis;
+    }
+
+    /**
+     * Set the length of the track
+     * @param length number of steps a horse must take to finish (at least 1)
      */
     public void setRaceLength(int length)
     {
+        if (length < 1)
+        {
+            throw new IllegalArgumentException("Race length must be at least 1.");
+        }
         raceLength = length;
     }
 
     /**
-     * Set the OutputStream stream
-     * to the NewOutputStream stream
-     * @param stream
+     * Set where the race is displayed
+     * @param output the display target
      */
-    public void setOutputStream(NewOutputStream stream)
+    public void setOutputStream(RaceOutput output)
     {
-        Output = stream;
+        this.output = output == null ? RaceOutput.NONE : output;
     }
 
     /**
-     * Set the betHorse to the horse
-     * @return ArrayList<Horse>
+     * @return the horses in lane order (read-only)
      */
-    public ArrayList<Horse> getAllHorses()
+    public List<Horse> getAllHorses()
     {
-        return horses;
+        return Collections.unmodifiableList(horses);
     }
-    
+
     /**
-     * Set the horse we place a bet on
-     * @param horse
+     * Adds a horse to the race in the next free lane
+     *
+     * @param theHorse the horse to be added to the race
+     * @throws IllegalArgumentException if the horse is null or already in the race
      */
-    public void setBetHorse(Horse horse)
+    public void addHorse(Horse theHorse)
     {
+        if (theHorse == null)
+        {
+            throw new IllegalArgumentException("Horse must not be null.");
+        }
+        if (horses.contains(theHorse))
+        {
+            throw new IllegalArgumentException(theHorse.getName() + " is already in the race.");
+        }
+        horses.add(theHorse);
+        theHorse.setLane(horses.size());
+    }
+
+    /**
+     * Removes a horse from the race and renumbers the remaining lanes
+     * so they stay 1..n with no gaps. Any bet on that horse is refunded.
+     *
+     * @param theHorse the horse to be removed
+     */
+    public void delHorse(Horse theHorse)
+    {
+        if (!horses.remove(theHorse))
+        {
+            return;
+        }
+        if (theHorse == betHorse)
+        {
+            budget += betAmount;
+            clearBet();
+        }
+        for (int i = 0; i < horses.size(); i++)
+        {
+            horses.get(i).setLane(i + 1);
+        }
+    }
+
+    // Betting
+
+    /**
+     * Place the single bet for the next race. The stake is taken from the budget now
+     * and returned double if the horse wins (or ties for the win).
+     *
+     * @param horse a horse in this race
+     * @param amount stake in pounds, between 1 and the current budget
+     * @throws IllegalArgumentException for an unknown horse or invalid amount
+     * @throws IllegalStateException if a bet has already been placed
+     */
+    public void placeBet(Horse horse, int amount)
+    {
+        if (betHorse != null)
+        {
+            throw new IllegalStateException("A bet of £" + betAmount + " on " + betHorse.getName() + " is already placed.");
+        }
+        if (horse == null || !horses.contains(horse))
+        {
+            throw new IllegalArgumentException("Choose a horse that is in the race.");
+        }
+        if (amount < 1 || amount > budget)
+        {
+            throw new IllegalArgumentException("Bet must be between £1 and your budget of £" + budget + ".");
+        }
         betHorse = horse;
+        betAmount = amount;
+        budget -= amount;
     }
 
     /**
-     * Get the horse we place a bet on
-     * @return Horse
+     * Pay out the bet on the race that has just finished and clear it.
+     * @return the amount paid out (0 if there was no bet or it lost)
      */
-    public Horse getBetHorse()
+    public int settleBet()
     {
-        return betHorse;
+        int payout = (betHorse != null && wonBet) ? betAmount * 2 : 0;
+        budget += payout;
+        clearBet();
+        return payout;
     }
 
-    /**
-     * Set the budget of the player
-     * @param budget
-     */
-    public void setBudget(int budget)
-    {
-        this.budget = budget;
-    }
-
-    /**
-     * Get the budget of the player
-     * @return int budget
-     */
     public int getBudget()
     {
         return budget;
     }
 
-    /**
-     * Set the bet amount
-     * @param double amount of bet
-     */
-    public void setBet(double bet)
+    public Horse getBetHorse()
     {
-        this.bet = bet;
+        return betHorse;
+    }
+
+    public int getBetAmount()
+    {
+        return betAmount;
     }
 
     /**
-     * Get the bet amount
-     * @return double bet
-     */
-    public double getBet()
-    {
-        return bet;
-    }
-
-    /**
-     * Get the wonBet boolean
-     * @return boolean wonBet
+     * @return whether the bet horse won the most recent race
      */
     public boolean getWonBet()
     {
         return wonBet;
     }
 
-    ///
-    /**
-     * Constructor for objects of class Race
-     * Initially there are no horses in the lanes
-     * 
-     * @return Empty Race object
-     */
-    public Race()
+    private void clearBet()
     {
-        // initialise instance variables
-        horses = new ArrayList<Horse>();
-        laneCount = 1;
-        budget = 75000;
-        wonBet = false;
-    }
-    
-    /**
-     * Adds a horse to the race in the next free lane
-     * 
-     * @param theHorse the horse to be added to the race
-     */
-    public void addHorse(Horse theHorse)
-    {
-        horses.add(theHorse);
-        theHorse.setLane(laneCount);
-        this.laneCount++;
+        betHorse = null;
+        betAmount = 0;
     }
 
-    /**
-     * Deletes a horse from the race
-     * 
-     * @param theHorse the horse to be added to the race
-     */
-    public void delHorse(Horse theHorse)
-    {
-        horses.remove(theHorse);
-        this.laneCount--;
-    }
-    
+    // Racing
+
     /**
      * Start the race
-     * The horse are brought to the start and
-     * then repeatedly moved forward until the 
+     * The horses are brought to the start and
+     * then repeatedly moved forward until the
      * race is finished
      */
     public void startRace()
     {
-        //declare a local variable to tell us when the race is finished
-        boolean finished = false;
-        
-        //reset all the lanes (all horses not fallen and back to 0). 
+        wonBet = false;
+
+        if (horses.isEmpty())
+        {
+            output.print("Add at least one horse before starting a race.\n");
+            return;
+        }
+        if (raceLength < 1)
+        {
+            throw new IllegalStateException("Set a race length before starting.");
+        }
+
+        //reset all the lanes (all horses not fallen and back to 0).
         for (Horse horse : horses)
         {
             horse.goBackToStart();
             horse.stand();
         }
 
-        Output.print("\n");
-                      
-        while (!finished)
+        output.print("\n");
+
+        while (true)
         {
             //move each horse
             for (Horse horse : horses)
             {
                 moveHorse(horse);
             }
-                        
+
             //print the race positions
             printRace();
-            
-            //if any of the three horses has won the race is finished
-            for (Horse horse : horses)
+
+            if (horses.stream().anyMatch(this::hasFinished))
             {
-                if (raceWonBy(horse))
-                {
-                    finished = true;
-                }
+                break;
             }
 
-        // Check if all Horses have fallen
-            boolean allHorsesFallen = true;
-            for (Horse horse : horses)
+            if (horses.stream().allMatch(Horse::hasFallen))
             {
-                if (!horse.hasFallen())
-                {
-                    allHorsesFallen = false;
-                    break;
-                }
-            }
-            if (allHorsesFallen)
-            {
-                Output.print("All horses have fallen, no winner.\n");
+                output.print("All horses have fallen, no winner.\n");
+                recordResults(List.of());
                 return;
             }
-        // End check
-           
-            //wait for 300 milliseconds
-            try{ 
-                TimeUnit.MILLISECONDS.sleep(100);
-            }catch(Exception e){}
+
+            pause();
         }
 
+        List<Horse> winners = horses.stream().filter(this::hasFinished).toList();
+        for (Horse winner : winners)
+        {
+            // A win raises confidence once per race.
+            winner.setConfidence(winner.getConfidence() + 0.1);
+        }
+        // Redraw with the updated confidence, then announce (printRace clears the display first).
         printRace();
-        // Display the name of the winning horse(s)! MODIFICATION
+        for (Horse winner : winners)
+        {
+            output.print("The winner is: " + winner.getName() + "\n");
+        }
+        wonBet = betHorse != null && winners.contains(betHorse);
+        recordResults(winners);
+    }
+
+    private void recordResults(List<Horse> winners)
+    {
         for (Horse horse : horses)
         {
-            if (raceWonBy(horse))
-            {
-                Output.print("The winner is: "+ horse.getName()+"\n");
-                horse.getStats().addPerformance(true, horse.getConfidence(), horse.hasFallen());;
-            }
-            else
-            {
-                horse.getStats().addPerformance(false, horse.getConfidence(), horse.hasFallen());
-            }
+            horse.getStats().addPerformance(winners.contains(horse), horse.getConfidence(), horse.hasFallen());
         }
     }
-    
+
+    private void pause()
+    {
+        if (tickMillis <= 0)
+        {
+            return;
+        }
+        try
+        {
+            Thread.sleep(tickMillis);
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     /**
      * Randomly make a horse move forward or fall depending
      * on its confidence rating
      * A fallen horse cannot move
-     * 
+     *
      * @param theHorse the horse to be moved
      */
     private void moveHorse(Horse theHorse)
     {
-        //if the horse has fallen it cannot move, 
+        //if the horse has fallen it cannot move,
         //so only run if it has not fallen
-        
-        if  (!theHorse.hasFallen())
+        if (!theHorse.hasFallen())
         {
             //the probability that the horse will move forward depends on the confidence;
-            if (Math.random() < theHorse.getConfidence())
+            if (random.nextDouble() < theHorse.getConfidence())
             {
-               theHorse.moveForward();
+                theHorse.moveForward();
             }
-            
+
             //the probability that the horse will fall is very small (max is 0.1)
-            //but will also will depends exponentially on confidence 
+            //but will also will depends exponentially on confidence
             //so if you double the confidence, the probability that it will fall is *2
-            if (Math.random() < (0.1*theHorse.getConfidence()*theHorse.getConfidence()))
+            if (random.nextDouble() < (0.1 * theHorse.getConfidence() * theHorse.getConfidence()))
             {
                 theHorse.fall();
             }
         }
     }
-        
-    /** 
-     * Determines if a horse has won the race
+
+    /**
+     * Determines if a horse has reached the finish line. Has no side effects,
+     * so it can be called any number of times per frame.
      *
      * @param theHorse The horse we are testing
-     * @return true if the horse has won, false otherwise.
+     * @return true if the horse has finished, false otherwise.
      */
-    private boolean raceWonBy(Horse theHorse)
+    private boolean hasFinished(Horse theHorse)
     {
-        if (theHorse.getDistanceTravelled() >= raceLength)
-        {
-            theHorse.setConfidence(Math.round((theHorse.getConfidence() + 0.1) * 10.0) / 10.0);
-            wonBet = (theHorse == betHorse);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return theHorse.getDistanceTravelled() >= raceLength;
     }
-    
+
     /***
-     * Print the race into the new Output Stream
+     * Print the race into the output
      */
     private void printRace()
     {
-        Output.clearDisplay();
+        output.clear();
 
-        multiplePrint('=',raceLength*2); //top edge of track
-        Output.print("\n");
-        
-        for (Horse horses : horses)
+        multiplePrint('=', raceLength * 2); //top edge of track
+        output.print("\n");
+
+        for (Horse horse : horses)
         {
-            printLane(horses);
-            Output.print("\n");
+            printLane(horse);
+            output.print("\n");
         }
 
-        multiplePrint('=',raceLength*2); //bottom edge of track
-        Output.print("\n");    
+        multiplePrint('=', raceLength * 2); //bottom edge of track
+        output.print("\n");
     }
-    
+
     /**
      * print a horse's lane during the race
      * for example
@@ -315,50 +363,44 @@ public class Race
     {
         //calculate how many spaces are needed before
         //and after the horse
-        int spacesBefore = theHorse.getDistanceTravelled();
-        int spacesAfter = raceLength - theHorse.getDistanceTravelled();
-        
+        int spacesBefore = Math.min(theHorse.getDistanceTravelled(), raceLength);
+        int spacesAfter = raceLength - spacesBefore;
+
         //print a | for the beginning of the lane
-        Output.print("|");
-        
+        output.print("|");
+
         //print the spaces before the horse
-        multiplePrint(' ',spacesBefore);
-        
+        multiplePrint(' ', spacesBefore);
+
         //if the horse has fallen then print dead
         //else print the horse's symbol
-        if(theHorse.hasFallen())
+        if (theHorse.hasFallen())
         {
-            Output.print("X ");
+            output.print("X ");
         }
         else
         {
-            Output.print(theHorse.getSymbol()+"");
+            output.print(theHorse.getSymbol() + "");
         }
-        
-        //print the spaces after the horse
-        multiplePrint(' ',spacesAfter);
-        
-        //print the | for the end of the track
-        Output.print("|");
 
-        Output.print("    "+ theHorse.getName() +", current confidence: "+ theHorse.getConfidence());
+        //print the spaces after the horse
+        multiplePrint(' ', spacesAfter);
+
+        //print the | for the end of the track
+        output.print("|");
+
+        output.print("    " + theHorse.getName() + ", current confidence: " + theHorse.getConfidence());
     }
-        
-    
+
     /***
      * print a character a given number of times.
      * e.g. printmany('x',5) will print: xxxxx
-     * 
+     *
      * @param aChar the character to Print
      * @param times the number of times to print the character
      */
     private void multiplePrint(char aChar, int times)
     {
-        int i = 0;
-        while (i < times)
-        {
-            Output.print(aChar+"");
-            i = i + 1;
-        }
+        output.print(String.valueOf(aChar).repeat(Math.max(0, times)));
     }
 }
