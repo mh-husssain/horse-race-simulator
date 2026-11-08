@@ -1,17 +1,18 @@
+package horserace;
+
 
 /**
  * Test class made of methods used to test
  * the Horse and Race java classes.
  * 
  * @author Muhammad Hussain
- * @version 1.2 (22-04-2024)
+ * @version 1.4 (23-04-2024)
  * @see Horse
  * @see Race
- * 
  */
-public class Test {
+public class Main {
     public static void main(String[] args) {
-        startRace();
+        startRaceGUI();
     }
 
 
@@ -36,11 +37,11 @@ public class Test {
 
     /**
      * Test the Race class
-     * @return void
+     * @return Race testing object
      */
-    public static void startRace()
+    public static Race testRace()
     {
-        Race race = new Race(10);
+        Race race = new Race();
         Horse horse1 = new Horse('A',"Horse1", 0.8);
         Horse horse2 = new Horse('B',"Horse2", 1);
         Horse horse3 = new Horse('C',"Horse3", 0.6);
@@ -53,8 +54,17 @@ public class Test {
         race.addHorse(horse1);
         race.addHorse(new Horse('D',"Horse4", 0.9));
 
-        /*while (true)*/ race.startRace();
+        return race;
+        ///*while (true)*/ race.startRace();
+    }
+
+    /**
+     * Test the RaceGUI class
+     * @return void
+     */
+    public static void startRaceGUI()
+    {
+        RaceGUI raceGUI = new RaceGUI();
+        raceGUI.setVisible(true);
     }
 }
-
-

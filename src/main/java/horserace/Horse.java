@@ -1,3 +1,5 @@
+package horserace;
+
 
 /**
  * The Horse class represents the horse object which

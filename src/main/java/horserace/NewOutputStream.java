@@ -1,3 +1,5 @@
+package horserace;
+
 
 import javax.swing.JTextArea;
 
